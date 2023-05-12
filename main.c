@@ -2,7 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
+#include "heap.h"
+#include "stack.h"
 
+typedef struct{
+char *nombre;
+int prioridad;
+char *precedente;
+bool completado;
+} tareaInfo;
+
+typedef struct{ // stack de acciones realizadas para el deshacer acciones
+  int numeroAccion; // que se realizo
+  tareaInfo tarea; // la tarea que se realizo
+} accion;
 
 void menuTexto(int *opcion) {
 
@@ -34,10 +48,40 @@ void menuTexto(int *opcion) {
   }
 }
 
+void agregarTarea(Heap *arreglo)
+{
+  char nombre[50];
+  char precedente[50];
+  int prioridad;
+  tareaInfo *tarea = malloc(sizeof(tareaInfo) );
+
+  printf("Ingrese el nombre de la Tarea: ");
+  scanf("%s", nombre);
+  tarea->nombre = malloc(strlen(nombre) + 1);
+  strcpy(tarea->nombre, nombre);
+
+  printf("Ingrese la prioridad de la Tarea: ");
+  scanf("%i", &prioridad);
+  tarea->prioridad = prioridad;
+  printf("Ingrese el precedente de la tarea (deje en blanco si no tiene): ");
+  if (strlen(precedente) > 0) 
+  {
+    tarea->precedente = malloc(strlen(precedente) + 1);
+    strcpy(tarea->precedente, precedente);
+  } else 
+    {
+      tarea->precedente = NULL;
+    }
+  tarea->completado = false;
+  heap_push(arreglo, tarea, tarea->prioridad);
+  printf("Tarea agregada con éxito.\n");
+}
+
 int main(){
 
   int opcion;
-  Map *jugadores = createMap(is_equal_string);
+  Stack *acciones;
+  Heap *array;
 
   printf("~~~~~~BIENVENIDO AL MENU DE JUGADOR~~~~~~\n\n");
   while (1) {
@@ -52,29 +96,29 @@ int main(){
       break;
     case 2:
       printf("\n--------------------------------------------\n");
-      establecerPrecedencia(jugadores);
+      //establecerPrecedencia(jugadores);
       printf("\n--------------------------------------------\n");
       break;
     case 3:
       // printf("¿Que item deasea agregar?"); // lo comento pq estoy probando lo
       // de la pila para el deshacer :)
       printf("\n--------------------------------------------\n");
-      mostrarPorHacer(jugadores);
+      //mostrarPorHacer(jugadores);
       printf("\n--------------------------------------------\n");
       break;
     case 4:
       printf("\n--------------------------------------------\n");
-      marcarComoCompletada(jugadores);
+      //marcarComoCompletada(jugadores);
       printf("\n--------------------------------------------\n");
       break;
     case 5:
       printf("\n--------------------------------------------\n");
-      deshacerUltima(jugadores);
+      //deshacerUltima(jugadores);
       printf("\n--------------------------------------------\n");
       break;
     case 6:
       printf("\n--------------------------------------------\n");
-      importarArchivo(jugadores);
+      //importarArchivo(jugadores);
       printf("\n--------------------------------------------\n");
       break;
     case 0:
@@ -88,12 +132,3 @@ int main(){
 
   return 0;
 }
-
-
-
-
-
-
-
-
-
