@@ -84,7 +84,7 @@ int main() {
 
   int opcion;
   Stack *acciones;
-  Heap *arreglo;
+  Heap *arreglo =createHeap(arreglo);
 
   printf("~~~~~~BIENVENIDO AL MENU DE JUGADOR~~~~~~\n\n");
   while (1) {
