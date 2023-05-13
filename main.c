@@ -1,5 +1,6 @@
 #include "heap.h"
 #include "stack.h"
+#include "list.h"
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -9,7 +10,7 @@
 typedef struct {
   char *nombre;
   int prioridad;
-  char *precedente;
+  List *precedentes; //pueden ser varias las tareas precedentes, opino que usar una lista o un vector de strings seria bueno
   bool completado;
 } tareaInfo;
 
@@ -50,9 +51,6 @@ void menuTexto(int *opcion) {
 }
 
 void agregarTarea(Heap *arreglo)
-// no se si funcione, lo hice bastante general no me funciona correr el
-// algoritmo, no se qwea, me dice: "make: *** No targets specified and no
-// makefile found.  Stop. "
 {
   char nombre[50];
   char precedente[50];
@@ -67,16 +65,7 @@ void agregarTarea(Heap *arreglo)
   printf("Ingrese la prioridad de la Tarea: ");
   scanf("%i", &prioridad);
   tarea->prioridad = prioridad;
-  printf("Ingrese el precedente de la tarea (deje en blanco si no tiene): ");
-  scanf("%s[^\n]", precedente);
-  if (!isdigit(precedente[0])) {
-    tarea->precedente = malloc(strlen(precedente) + 1);
-    strcpy(tarea->precedente, precedente);
-  } else {
-    tarea->precedente = NULL;
-  }
-  tarea->completado = false;
-  //heap_push(arreglo, tarea, tarea->prioridad);
+
   printf("Tarea agregada con éxito.\n");
 }
 
@@ -84,7 +73,7 @@ int main() {
 
   int opcion;
   Stack *acciones;
-  Heap *arreglo =createHeap(arreglo);
+  Heap *arreglo = createHeap(arreglo);
 
   printf("~~~~~~BIENVENIDO AL MENU DE JUGADOR~~~~~~\n\n");
   while (1) {
