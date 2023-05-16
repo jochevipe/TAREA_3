@@ -132,11 +132,35 @@ void mostrarTareas(Map *grafo) {
 
   List *listaOrdenada = createList();
   Nodo *aux = firstMap(grafo);
+  int cont = 0;
+  //
+  while (aux != NULL) 
+  {
+    void *pos = firstList(listaOrdenada);
+    void *prev = NULL;
+    bool seInserto = false;
+
+    while (pos != NULL && aux->prioridad >= ((Nodo *)pos)->prioridad)  // se comparan prioridades
+    {
+      prev = pos;
+      pos = nextList(listaOrdenada);
+    }
   
-  while (aux != NULL) {
-    pushFront(listaOrdenada, aux);
+    if (prev != NULL) 
+    {
+      pushCurrent(listaOrdenada, aux); // se intercambian orden
+      seInserto = true;
+    }
+  
+    if (!seInserto) 
+    {
+      pushFront(listaOrdenada, aux);
+    }
+
     aux = nextMap(grafo);
+    cont++;
   }
+  //
 
  // mostrar ya la lista Ordenada
   for (Nodo *n = firstList(listaOrdenada); n != NULL; n = nextList(listaOrdenada)) {
