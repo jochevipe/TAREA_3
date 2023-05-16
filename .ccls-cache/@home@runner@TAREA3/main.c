@@ -128,7 +128,7 @@ void establecerPrecedencia(Map *grafo){
     
 } //LISTO(?)
 
-void mostrarTareas(Map *grafo) {
+void mostrarTareas(Map *grafo) { 
 
   List *listaOrdenada = createList();
   Nodo *aux = firstMap(grafo);
@@ -169,7 +169,7 @@ void mostrarTareas(Map *grafo) {
       printf("Nombre: %s, Prioridad: %d\n", tarea->nombre, tarea->prioridad);
     }
   }
-}
+} // Se muestran por prioridad, falta ingresar los precedentes a la lista
 
 void marcarComoCompletada(Map *grafo){
   
