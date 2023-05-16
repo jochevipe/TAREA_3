@@ -132,8 +132,19 @@ void mostrarTareas(Map *grafo) {
 
   List *listaOrdenada = createList();
   Nodo *aux = firstMap(grafo);
-
   
+  while (aux != NULL) {
+    pushFront(listaOrdenada, aux);
+    aux = nextMap(grafo);
+  }
+
+ // mostrar ya la lista Ordenada
+  for (Nodo *n = firstList(listaOrdenada); n != NULL; n = nextList(listaOrdenada)) {
+    Nodo *tarea = (Nodo *)n;
+    if (!tarea->completado) {
+      printf("Nombre: %s, Prioridad: %d\n", tarea->nombre, tarea->prioridad);
+    }
+  }
 }
 
 void marcarComoCompletada(Map *grafo){
