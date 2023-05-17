@@ -92,7 +92,6 @@ void agregarTarea(Map *grafo) {
   tarea->prioridad = prioridad;
  // Establecer la función de ordenamiento por prioridad
   insertMap(grafo, tarea->nombre, tarea);
-  setSortFunction(grafo, lower_than_prioridad);
   
   printf("\nTarea agregada con éxito.\n");
 } // LISTO(?)
@@ -108,21 +107,23 @@ void establecerPrecedencia(Map *grafo) {
 
   printf("Ingrese el nombre de la primera tarea: ");
   scanf("%s", tarea1);
-
-  if (searchMap(grafo, tarea1) == NULL) {
+/*
+  if (!searchMap(grafo, tarea1)) {
 
     puts("La tarea no se encuentra guardada.");
     return;
   }
+  */
 
   printf("\nIngrese el nombre de la segunda tarea: ");
   scanf("%s", tarea2);
-
-  if (searchMap(grafo, tarea2) == NULL) {
+/*
+ if (searchMap(grafo, tarea2) == NULL) {
 
     puts("\nLa tarea no se encuentra guardada.");
     return;
   }
+  */
 
   Nodo *t1 = searchMap(grafo, tarea1);
   Nodo *t2 = searchMap(grafo, tarea2);
@@ -136,28 +137,59 @@ void establecerPrecedencia(Map *grafo) {
 
 void mostrarTareas(Map *grafo) {
   Heap *heap = createHeap();
-  Nodo *aux = firstMap(grafo);
+  Map *tareasMostradas = createMap(is_equal_string);
 
-  while (aux != NULL) {
-    aux->prioridad*=-1;
+  // Agregar todas las tareas al heap
+  Nodo *aux = firstMap(grafo);
+  while (aux != NULL) { // se ordena en un monticulo y se guardan los datos en un mapa auxiliar
+    aux->prioridad *= -1; // para que se guarden de menor a mayor
     heap_push(heap, aux, aux->prioridad);
     aux = nextMap(grafo);
   }
 
-  printf("\nHay %d tareas por hacer:\n\n", heap->size);
-
+  int contador = 1;
+  printf("Tareas por hacer, ordenadas por prioridad y precedencia:\n");
   while (heap->size > 0) {
-    Nodo *tarea = (Nodo *)heap_top(heap);
+    
+    Nodo *tarea = (Nodo *)heap_top(heap); // se guarda el menor
     heap_pop(heap);
-    if (!tarea->completado) {
-      tarea->prioridad*=-1;
-      printf("Nombre: %s, Prioridad: %d\n", tarea->nombre, tarea->prioridad);
+
+    if (!tarea->completado && searchMap(tareasMostradas, tarea->nombre) == NULL) 
+    { // si la tarea no esta completa y aun no se muestra
+      tarea->prioridad *= -1; // estaba en negativo, se pasa a positivo para mostrarlo
+
+      printf("%d. %s (Prioridad: %d)\n", contador, tarea->nombre, tarea->prioridad);
+      insertMap(tareasMostradas, tarea->nombre, tarea); // se actualiza
+
+      Heap *nodosAdj = tarea->nodosAdj;
+      if (nodosAdj != NULL) {
+        Heap *tempHeap = createHeap(); // Montículo temporal para guardar los precedentes
+
+        while (nodosAdj->size > 0) {
+          Nodo *precedente = (Nodo *)heap_top(nodosAdj);
+          heap_pop(nodosAdj);
+
+          if (!precedente->completado && searchMap(tareasMostradas, precedente->nombre) == NULL) { // practicamente se repite pero con los precedentes
+            precedente->prioridad *= -1;
+            printf("%d. %s (Prioridad: %d) - Precedente: %s\n", contador + 1, precedente->nombre,
+                   precedente->prioridad, tarea->nombre);
+            heap_push(tempHeap, precedente, precedente->prioridad);
+            insertMap(tareasMostradas, precedente->nombre, precedente);
+            contador++;
+          }
+        }
+
+        // Insertar los precedentes en el montículo principal
+        while (tempHeap->size > 0) {
+          Nodo *precedente = (Nodo *)heap_top(tempHeap);
+          heap_pop(tempHeap);
+          heap_push(heap, precedente, precedente->prioridad);
+        }
+      }
+      contador++;
     }
   }
-
-  free(heap->heapArray);
-  free(heap);
-}
+} // funciona al mostrar por prioridad, los precedentes funcionan?, pero solamente al llamar por primera vez el mostrar, luego estos es como si nunca fueron agregados, no supe donde esta el error, deje comentado el codigo de igual manera 
 
 void marcarComoCompletada(Map *grafo) {}
 
@@ -169,8 +201,7 @@ int main() {
 
   int opcion;
   Stack *acciones;
-  Map *grafoTareas = createMap(lower_than_prioridad);
-  setSortFunction(grafoTareas, lower_than_prioridad);
+  Map *grafoTareas = createMap(is_equal_string);
 
   printf("~~~~~~BIENVENIDO AL MENU DE JUGADOR~~~~~~\n\n");
   while (1) {
