@@ -23,7 +23,7 @@ typedef struct { // Nodo que se guardara en el grafo
   char *nombre;
   int prioridad;
   bool completado;
-  Heap *nodosAdj; // Lista de tareas que la preceden
+  List *nodosAdj;
 } Nodo;
 
 typedef struct {    // stack de acciones realizadas para el deshacer acciones
@@ -37,11 +37,12 @@ int is_equal_string(void *key1, void *key2) {
   return 0;
 }
 
-int lower_than_prioridad(void* key1, void* key2) {
-  Nodo* tarea1 = (Nodo*)key1;
-  Nodo* tarea2 = (Nodo*)key2;
-  if (tarea1->prioridad < tarea2->prioridad) return -1;
-  return 0;
+int lower_than_prioridad(void *key1, void *key2) {
+  Nodo *tarea1 = (Nodo *)key1;
+  Nodo *tarea2 = (Nodo *)key2;
+  if (tarea1->prioridad < tarea2->prioridad)
+    return -1;
+  return 0; 
 }
 
 void menuTexto(int *opcion) {
@@ -79,7 +80,7 @@ void agregarTarea(Map *grafo) {
   char nombre[50];
   int prioridad;
   Nodo *tarea = (Nodo *)malloc(sizeof(Nodo));
-  tarea->nodosAdj = createHeap();
+  tarea->nodosAdj = createList();
   tarea->completado = false;
 
   printf("Ingrese el nombre de la Tarea: ");
@@ -90,9 +91,9 @@ void agregarTarea(Map *grafo) {
   printf("Ingrese la prioridad de la Tarea: ");
   scanf("%i", &prioridad);
   tarea->prioridad = prioridad;
- // Establecer la función de ordenamiento por prioridad
+  // Establecer la función de ordenamiento por prioridad
   insertMap(grafo, tarea->nombre, tarea);
-  
+
   printf("\nTarea agregada con éxito.\n");
 } // LISTO(?)
 
@@ -107,30 +108,29 @@ void establecerPrecedencia(Map *grafo) {
 
   printf("Ingrese el nombre de la primera tarea: ");
   scanf("%s", tarea1);
-/*
-  if (!searchMap(grafo, tarea1)) {
+  
+    if (!searchMap(grafo, tarea1)) {
 
-    puts("La tarea no se encuentra guardada.");
-    return;
-  }
-  */
+      puts("La tarea no se encuentra guardada.");
+      return;
+    }
+    
 
   printf("\nIngrese el nombre de la segunda tarea: ");
   scanf("%s", tarea2);
-/*
- if (searchMap(grafo, tarea2) == NULL) {
+   if (searchMap(grafo, tarea2) == NULL) {
 
-    puts("\nLa tarea no se encuentra guardada.");
-    return;
-  }
-  */
+      puts("\nLa tarea no se encuentra guardada.");
+      return;
+    }
+  
 
   Nodo *t1 = searchMap(grafo, tarea1);
   Nodo *t2 = searchMap(grafo, tarea2);
 
   if (searchMap(grafo, tarea1) != NULL) {
 
-    heap_push(t1->nodosAdj, t2, t2->prioridad);
+    pushBack(t1->nodosAdj, t2);
   }
 
 } // LISTO(?)
@@ -141,7 +141,8 @@ void mostrarTareas(Map *grafo) {
 
   // Agregar todas las tareas al heap
   Nodo *aux = firstMap(grafo);
-  while (aux != NULL) { // se ordena en un monticulo y se guardan los datos en un mapa auxiliar
+  while (aux != NULL) {   // se ordena en un monticulo y se guardan los datos en
+                          // un mapa auxiliar
     aux->prioridad *= -1; // para que se guarden de menor a mayor
     heap_push(heap, aux, aux->prioridad);
     aux = nextMap(grafo);
@@ -149,33 +150,44 @@ void mostrarTareas(Map *grafo) {
 
   int contador = 1;
   printf("Tareas por hacer, ordenadas por prioridad y precedencia:\n");
-  while (heap->size > 0) {
-    
+  while (heap->size > 0) 
+  {
+
     Nodo *tarea = (Nodo *)heap_top(heap); // se guarda el menor
     heap_pop(heap);
 
     if (!tarea->completado && searchMap(tareasMostradas, tarea->nombre) == NULL) 
     { // si la tarea no esta completa y aun no se muestra
-      tarea->prioridad *= -1; // estaba en negativo, se pasa a positivo para mostrarlo
+      tarea->prioridad *=-1; // estaba en negativo, se pasa a positivo para mostrarlo
 
-      printf("%d. %s (Prioridad: %d)\n", contador, tarea->nombre, tarea->prioridad);
+      printf("%d. %s (Prioridad: %d)\n", contador, tarea->nombre,
+             tarea->prioridad);
       insertMap(tareasMostradas, tarea->nombre, tarea); // se actualiza
 
-      Heap *nodosAdj = tarea->nodosAdj;
-      if (nodosAdj != NULL) {
+      Heap *nodosAdj =  createHeap(); // para almacenar los precedentes.
+      Nodo *auxList = firstList(tarea->nodosAdj);
+      while(auxList) // se llena el monticulo
+        {
+          heap_push(nodosAdj, auxList, auxList->prioridad);
+          auxList = nextList(tarea->nodosAdj);
+        }
+      
+      if (nodosAdj ->size > 0) 
+      {
         Heap *tempHeap = createHeap(); // Montículo temporal para guardar los precedentes
 
-        while (nodosAdj->size > 0) {
-          Nodo *precedente = (Nodo *)heap_top(nodosAdj);
-          heap_pop(nodosAdj);
-
-          if (!precedente->completado && searchMap(tareasMostradas, precedente->nombre) == NULL) { // practicamente se repite pero con los precedentes
-            precedente->prioridad *= -1;
-            printf("%d. %s (Prioridad: %d) - Precedente: %s\n", contador + 1, precedente->nombre,
-                   precedente->prioridad, tarea->nombre);
-            heap_push(tempHeap, precedente, precedente->prioridad);
-            insertMap(tareasMostradas, precedente->nombre, precedente);
-            contador++;
+          while (nodosAdj->size > 0) 
+          {
+            Nodo *precedente = (Nodo *)heap_top(nodosAdj);
+            heap_pop(nodosAdj);
+  
+            if (!precedente->completado && searchMap(tareasMostradas, precedente->nombre) == NULL) 
+            { // practicamente se repite pero con los precedentes
+              precedente->prioridad *= -1;
+              printf("%d. %s (Prioridad: %d) - Precedente: %s\n", contador + 1, precedente->nombre, precedente->prioridad, tarea->nombre);
+              heap_push(tempHeap, precedente, precedente->prioridad);
+              insertMap(tareasMostradas, precedente->nombre, precedente);
+              contador++;
           }
         }
 
@@ -189,7 +201,7 @@ void mostrarTareas(Map *grafo) {
       contador++;
     }
   }
-} // funciona al mostrar por prioridad, los precedentes funcionan?, pero solamente al llamar por primera vez el mostrar, luego estos es como si nunca fueron agregados, no supe donde esta el error, deje comentado el codigo de igual manera 
+}
 
 void marcarComoCompletada(Map *grafo) {}
 
