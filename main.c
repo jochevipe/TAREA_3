@@ -23,7 +23,7 @@ typedef struct { // Nodo que se guardara en el grafo
   char *nombre;
   int prioridad;
   bool completado;
-  List *nodosAdj; // Lista de tareas que la preceden
+  Heap *nodosAdj; // Lista de tareas que la preceden
 } Nodo;
 
 typedef struct {    // stack de acciones realizadas para el deshacer acciones
@@ -79,7 +79,7 @@ void agregarTarea(Map *grafo) {
   char nombre[50];
   int prioridad;
   Nodo *tarea = (Nodo *)malloc(sizeof(Nodo));
-  tarea->nodosAdj = createList();
+  tarea->nodosAdj = createHeap();
   tarea->completado = false;
 
   printf("Ingrese el nombre de la Tarea: ");
@@ -129,7 +129,7 @@ void establecerPrecedencia(Map *grafo) {
 
   if (searchMap(grafo, tarea1) != NULL) {
 
-    pushBack(t1->nodosAdj, t2);
+    heap_push(t1->nodosAdj, t2, t2->prioridad);
   }
 
 } // LISTO(?)

@@ -23,7 +23,7 @@ typedef struct { // Nodo que se guardara en el grafo
   char *nombre;
   int prioridad;
   bool completado;
-  List *nodosAdj; // Lista de tareas que la preceden
+  Heap *nodosAdj; // Lista de tareas que la preceden
 } Nodo;
 
 typedef struct {    // stack de acciones realizadas para el deshacer acciones
@@ -79,7 +79,7 @@ void agregarTarea(Map *grafo) {
   char nombre[50];
   int prioridad;
   Nodo *tarea = (Nodo *)malloc(sizeof(Nodo));
-  tarea->nodosAdj = createList();
+  tarea->nodosAdj = createHeap();
   tarea->completado = false;
 
   printf("Ingrese el nombre de la Tarea: ");
@@ -92,6 +92,7 @@ void agregarTarea(Map *grafo) {
   tarea->prioridad = prioridad;
  // Establecer la función de ordenamiento por prioridad
   insertMap(grafo, tarea->nombre, tarea);
+  setSortFunction(grafo, lower_than_prioridad);
   
   printf("\nTarea agregada con éxito.\n");
 } // LISTO(?)
@@ -128,40 +129,35 @@ void establecerPrecedencia(Map *grafo) {
 
   if (searchMap(grafo, tarea1) != NULL) {
 
-    pushBack(t1->nodosAdj, t2);
+    heap_push(t1->nodosAdj, t2, t2->prioridad);
   }
 
 } // LISTO(?)
 
 void mostrarTareas(Map *grafo) {
-
-  List *listaOrdenada = createList();
   Heap *heap = createHeap();
   Nodo *aux = firstMap(grafo);
-  //////// TEST
-  while (aux) {
-    if (!aux->completado) {
-      heap_push(heap, aux, aux->prioridad);
-    }
+
+  while (aux != NULL) {
+    aux->prioridad*=-1;
+    heap_push(heap, aux, aux->prioridad);
     aux = nextMap(grafo);
   }
 
-  while (heap_top(heap)) 
-  {
-    Nodo *tarea = heap_top(heap);
-    printf("Nombre: %s, Prioridad: %d\n", tarea->nombre, tarea->prioridad);
+  printf("\nHay %d tareas por hacer:\n\n", heap->size);
+
+  while (heap->size > 0) {
+    Nodo *tarea = (Nodo *)heap_top(heap);
     heap_pop(heap);
-  }
-  ///////////// TEST/FIN
-  /*while(aux)
-  { 
-    if (!aux->completado) {
-      printf("Nombre: %s, Prioridad: %d\n", aux->nombre, aux->prioridad);
+    if (!tarea->completado) {
+      tarea->prioridad*=-1;
+      printf("Nombre: %s, Prioridad: %d\n", tarea->nombre, tarea->prioridad);
     }
-    aux = nextMap(grafo);
   }
-*/
-} // el tercer dato que ingreso no se ordena correctectamente, el cuarto ya si, cuando se ingresa un dato el cual es el impar 
+
+  free(heap->heapArray);
+  free(heap);
+}
 
 void marcarComoCompletada(Map *grafo) {}
 
