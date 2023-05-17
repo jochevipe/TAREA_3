@@ -1,13 +1,12 @@
 #include "heap.h"
 #include "list.h"
-#include "stack.h"
 #include "map.h"
+#include "stack.h"
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 
 typedef struct nodo {
   void *data;
@@ -20,21 +19,28 @@ typedef struct Heap {
   int capac;
 } Heap;
 
-typedef struct{ //Nodo que se guardara en el grafo 
-char *nombre;
-int prioridad;
-bool completado;
-List *nodosAdj; //Lista de tareas que la preceden
-}Nodo;
+typedef struct { // Nodo que se guardara en el grafo
+  char *nombre;
+  int prioridad;
+  bool completado;
+  List *nodosAdj; // Lista de tareas que la preceden
+} Nodo;
 
 typedef struct {    // stack de acciones realizadas para el deshacer acciones
   int numeroAccion; // que se realizo
-  Nodo tarea;  // la tarea que se realizo
+  Nodo tarea;       // la tarea que se realizo
 } accion;
 
 int is_equal_string(void *key1, void *key2) {
   if (strcmp((char *)key1, (char *)key2) == 0)
     return 1;
+  return 0;
+}
+
+int lower_than_prioridad(void* key1, void* key2) {
+  Nodo* tarea1 = (Nodo*)key1;
+  Nodo* tarea2 = (Nodo*)key2;
+  if (tarea1->prioridad < tarea2->prioridad) return -1;
   return 0;
 }
 
@@ -68,15 +74,14 @@ void menuTexto(int *opcion) {
   }
 }
 
-void agregarTarea(Map *grafo){
-  
+void agregarTarea(Map *grafo) {
+
   char nombre[50];
   int prioridad;
-  Nodo *tarea = (Nodo*)malloc(sizeof(Nodo)); 
+  Nodo *tarea = (Nodo *)malloc(sizeof(Nodo));
   tarea->nodosAdj = createList();
   tarea->completado = false;
 
-  
   printf("Ingrese el nombre de la Tarea: ");
   scanf("%s", nombre);
   tarea->nombre = malloc(strlen(nombre) + 1);
@@ -85,110 +90,91 @@ void agregarTarea(Map *grafo){
   printf("Ingrese la prioridad de la Tarea: ");
   scanf("%i", &prioridad);
   tarea->prioridad = prioridad;
-
+ // Establecer la función de ordenamiento por prioridad
   insertMap(grafo, tarea->nombre, tarea);
+  
   printf("\nTarea agregada con éxito.\n");
-} //LISTO(?)
+} // LISTO(?)
 
-void establecerPrecedencia(Map *grafo){
+void establecerPrecedencia(Map *grafo) {
   char tarea1[50];
   char tarea2[50];
 
-  if(firstMap(grafo) == NULL){
+  if (firstMap(grafo) == NULL) {
     puts("\nNo hay tareas guardadas");
     return;
   }
-  
+
   printf("Ingrese el nombre de la primera tarea: ");
   scanf("%s", tarea1);
-  
-  
-  if(searchMap(grafo, tarea1) == NULL){
+
+  if (searchMap(grafo, tarea1) == NULL) {
 
     puts("La tarea no se encuentra guardada.");
     return;
   }
-    
+
   printf("\nIngrese el nombre de la segunda tarea: ");
   scanf("%s", tarea2);
 
-  if(searchMap(grafo, tarea2) == NULL){
+  if (searchMap(grafo, tarea2) == NULL) {
 
     puts("\nLa tarea no se encuentra guardada.");
     return;
-  }  
-  
+  }
+
   Nodo *t1 = searchMap(grafo, tarea1);
   Nodo *t2 = searchMap(grafo, tarea2);
-  
-  if(searchMap(grafo, tarea1) != NULL){
-      
+
+  if (searchMap(grafo, tarea1) != NULL) {
+
     pushBack(t1->nodosAdj, t2);
   }
-    
-} //LISTO(?)
 
-void mostrarTareas(Map *grafo) { 
+} // LISTO(?)
+
+void mostrarTareas(Map *grafo) {
 
   List *listaOrdenada = createList();
+  Heap *heap = createHeap();
   Nodo *aux = firstMap(grafo);
-  int cont = 0;
-  //
-  while (aux != NULL) 
-  {
-    void *pos = firstList(listaOrdenada);
-    void *prev = NULL;
-    bool seInserto = false;
-
-    while (pos != NULL && aux->prioridad >= ((Nodo *)pos)->prioridad)  // se comparan prioridades
-    {
-      prev = pos;
-      pos = nextList(listaOrdenada);
+  //////// TEST
+  while (aux) {
+    if (!aux->completado) {
+      heap_push(heap, aux, aux->prioridad);
     }
-  
-    if (prev != NULL) 
-    {
-      pushCurrent(listaOrdenada, aux); // se intercambian orden
-      seInserto = true;
-    }
-  
-    if (!seInserto) 
-    {
-      pushFront(listaOrdenada, aux);
-    }
-
     aux = nextMap(grafo);
-    cont++;
   }
-  //
 
- // mostrar ya la lista Ordenada
-  for (Nodo *n = firstList(listaOrdenada); n != NULL; n = nextList(listaOrdenada)) {
-    Nodo *tarea = (Nodo *)n;
-    if (!tarea->completado) {
-      printf("Nombre: %s, Prioridad: %d\n", tarea->nombre, tarea->prioridad);
+  while (heap_top(heap)) 
+  {
+    Nodo *tarea = heap_top(heap);
+    printf("Nombre: %s, Prioridad: %d\n", tarea->nombre, tarea->prioridad);
+    heap_pop(heap);
+  }
+  ///////////// TEST/FIN
+  /*while(aux)
+  { 
+    if (!aux->completado) {
+      printf("Nombre: %s, Prioridad: %d\n", aux->nombre, aux->prioridad);
     }
+    aux = nextMap(grafo);
   }
-} // Se muestran por prioridad, falta ingresar los precedentes a la lista
+*/
+} // el tercer dato que ingreso no se ordena correctectamente, el cuarto ya si, cuando se ingresa un dato el cual es el impar 
 
-void marcarComoCompletada(Map *grafo){
-  
-}
+void marcarComoCompletada(Map *grafo) {}
 
-void deshacerUltima(Map *grafo){
-  
-}
+void deshacerUltima(Map *grafo) {}
 
-void importarArchivo(Map *grafo){
-  
-}
-
+void importarArchivo(Map *grafo) {}
 
 int main() {
 
   int opcion;
   Stack *acciones;
-  Map *grafoTareas = createMap(is_equal_string);
+  Map *grafoTareas = createMap(lower_than_prioridad);
+  setSortFunction(grafoTareas, lower_than_prioridad);
 
   printf("~~~~~~BIENVENIDO AL MENU DE JUGADOR~~~~~~\n\n");
   while (1) {
@@ -205,13 +191,13 @@ int main() {
       printf("\n--------------------------------------------\n");
       establecerPrecedencia(grafoTareas);
       printf("\n--------------------------------------------\n");
-      
+
       break;
     case 3:
       printf("\n--------------------------------------------\n");
       mostrarTareas(grafoTareas);
       printf("\n--------------------------------------------\n");
-      
+
       break;
     case 4:
       printf("\n--------------------------------------------\n");
