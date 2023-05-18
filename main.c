@@ -24,12 +24,13 @@ typedef struct { // Nodo que se guardara en el grafo
   int prioridad;
   bool completado;
   List *nodosAdj;
+  Stack *accionT;
 } Nodo;
 
 typedef struct {    // stack de acciones realizadas para el deshacer acciones
   int numeroAccion; // que se realizo
   Nodo tarea;       // la tarea que se realizo
-} accion;
+} Accion;
 
 int is_equal_string(void *key1, void *key2) {
   if (strcmp((char *)key1, (char *)key2) == 0)
@@ -91,6 +92,8 @@ void agregarTarea(Map *grafo) {
   printf("Ingrese la prioridad de la Tarea: ");
   scanf("%i", &prioridad);
   tarea->prioridad = prioridad *-1;
+  //Se asigna la prioridad en negativo para ahorrar trabajo al usar el heap
+  
   // Establecer la función de ordenamiento por prioridad
   insertMap(grafo, tarea->nombre, tarea);
 
@@ -156,9 +159,12 @@ void mostrarTareas(Map *grafo) {
 
     // si la tarea no esta completa y aun no se muestra
     if (!tarea->completado && searchMap(tareasMostradas, tarea->nombre) == NULL) { 
+
+      // Estaba en negativo, se pasa a positivo para mostrarlo
       if(tarea->prioridad < 0){
-        tarea->prioridad *= -1; // estaba en negativo, se pasa a positivo para mostrarlo
+        tarea->prioridad *= -1; 
       }
+      
       printf("%d. %s (Prioridad: %d)\n", contador, tarea->nombre, tarea->prioridad);
       insertMap(tareasMostradas, tarea->nombre, tarea); // se actualiza
 
@@ -171,16 +177,16 @@ void mostrarTareas(Map *grafo) {
       }
 
       if (nodosAdj->size > 0) {
-        Heap *tempHeap =
-            createHeap(); // Montículo temporal para guardar los precedentes
+        // Montículo temporal para guardar los precedentes
+        Heap *tempHeap = createHeap(); 
 
         while (nodosAdj->size > 0) {
           Nodo *precedente = (Nodo *)heap_top(nodosAdj);
           heap_pop(nodosAdj);
+          
           // practicamente se repite pero con los precedentes
           if (!precedente->completado &&
             searchMap(tareasMostradas, precedente->nombre) == NULL) { 
-            
             
             printf("%d. %s (Prioridad: %d) - Precedente: %s\n", contador + 1,
                    precedente->nombre, precedente->prioridad, tarea->nombre);
@@ -201,17 +207,75 @@ void mostrarTareas(Map *grafo) {
       contador++;
     }
 
+    // Se invierte el signo como al principio para no tener errores al llamar repetidas veces la funcion
     if(tarea->prioridad > 0){
-    tarea->prioridad *= -1; // estaba en negativo, se pasa a positivo para mostrarlo
+    tarea->prioridad *= -1; 
     }
   }
 
   
-} // Hay erorres aun.
+} // Hay erorres aun. --Error de mostrar tareas(sin precedentes) y la prioridad arreglado--
 
-void marcarComoCompletada(Map *grafo) {}
+void marcarComoCompletada(Map *grafo) 
+{
+  char tarea[50];
+  printf("Ingrese el nombre de la tarea a marcar como completada: ");
+  scanf("%s", tarea);
 
-void deshacerUltima(Map *grafo) {}
+  Nodo *nodo = searchMap(grafo, tarea);
+  if( nodo != NULL)
+  {
+    nodo->completado = true;
+    printf("La tarea %s se ha marcado comopletada.\n", tarea);
+  }
+  else{
+    printf("La tarea '%s' no existe en el grafo.\n", tarea);
+  }
+}
+
+/*void deshacerUltima(Map *grafo) 
+{
+  char nombre[101];
+  printf("\nIngrese el nombre de la Tarea: ");
+  scanf("%s[^\n]", nombre);
+  getchar();
+  Nodo *aux = searchMap(grafo, nombre);
+
+  if (aux == NULL) {
+    puts("La Tarea no se encuentra registrada.\n");
+    return;
+  }
+
+  Accion *accion = (Accion *)stack_top(aux->accionJ);
+
+  switch (accion->accion) {
+  case 'a': // ultima accion fue agregar(a) item
+    eraseMap(aux->inventario, accion->dato); // eliminar item
+    aux->cantItems--;
+    stack_pop(
+        aux->accionJ); // se elimina la ultima accion que se realizo de la pila
+    break;
+
+  case 'e': // ultima accion fue eliminar(e) item
+    insertMap(aux->inventario, accion->dato, accion->dato); // agregar item
+    aux->cantItems++;
+    stack_pop(
+        aux->accionJ); // se elimina la ultima accion que se realizo de la pila
+    break;
+
+  case 'p': // ultima accion fue agregar puntos(p) de habilidad
+    aux->ph -= accion->puntos; // quitar puntos
+    stack_pop(
+        aux->accionJ); // se elimina la ultima accion que se realizo de la pila
+    break;
+
+  case 'x': // no existe ultima accion realizada(x)
+    printf("\nEste jugador no tiene acciones realizadas %s\n", nombre);
+    return;
+    break;
+  }
+}
+*/
 
 void importarArchivo(Map *grafo) {}
 
@@ -246,7 +310,7 @@ int main() {
       break;
     case 4:
       printf("\n--------------------------------------------\n");
-      // marcarComoCompletada(jugadores);
+      marcarComoCompletada(grafoTareas);
       printf("\n--------------------------------------------\n");
       break;
     case 5:
